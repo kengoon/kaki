@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
-
-from kaki.app import App
+from kivy.app import App
 from kivy.factory import Factory
 
+
 class Live(App):
-    CLASSES = {
-        "UI": "live.ui"
-    }
-    AUTORELOADER_PATHS = [
-        (".", {"recursive": True}),
-    ]
-    def build_app(self):
+    def build(self):
         return Factory.UI()
 
-Live().run()
+
+if __name__ == "__main__":
+    Live().run()

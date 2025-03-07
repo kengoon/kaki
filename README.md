@@ -16,18 +16,21 @@ If the bootstrap is started with the environment variable `DEBUG=1`, it will sta
 When something changes, the current application widget will be cleared out, and a new one will be instanciated, after reloading.
 
 ```python
-from kaki.app import App
+from kaki.app import HotReload
 from kivy.factory import Factory
 
-class Live(App):
+
+class Live(HotReload):
     CLASSES = {
         "UI": "live.ui"
     }
     AUTORELOADER_PATHS = [
         (".", {"recursive": True}),
     ]
+
     def build_app(self):
         return Factory.UI()
+
 
 Live().run()
 ```

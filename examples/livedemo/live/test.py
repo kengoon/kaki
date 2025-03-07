@@ -6,7 +6,7 @@ from kivy.lang import Builder
 Builder.load_string("""
 #:import rgba kivy.utils.get_color_from_hex
 <UIUserLabel@Label>:
-    index: 0
+    index: 1
     canvas.before:
         Color:
             rgba: rgba("#ff000044") if root.index % 2 else rgba("#00ff0044")

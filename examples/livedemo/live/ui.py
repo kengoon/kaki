@@ -2,6 +2,7 @@
 
 from kivy.factory import Factory as F
 from kivy.lang import Builder
+from kivy.uix.gridlayout import GridLayout
 
 Builder.load_string("""
 <UI>:
@@ -12,5 +13,5 @@ Builder.load_string("""
         id: slider
 """)
 
-class UI(F.GridLayout):
+class UI(GridLayout):
     pass

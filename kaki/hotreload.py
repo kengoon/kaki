@@ -4,16 +4,20 @@ Kaki Application
 ================
 
 """
-
+import pickle
+import socket
 import sys
+from threading import Thread
+
+from kivy import platform
+
 original_argv = sys.argv
 
 import os
 import sys
 import traceback
-from os.path import join, realpath
+from os.path import join, realpath, basename
 from fnmatch import fnmatch
-from kivy.app import App as BaseApp
 from kivy.logger import Logger
 from kivy.clock import Clock, mainthread
 from kivy.factory import Factory
@@ -21,13 +25,14 @@ from kivy.lang import Builder
 from kivy.base import ExceptionHandler, ExceptionManager
 from time import monotonic
 from importlib import reload
+from kivy.app import App
 
 
 class E(ExceptionHandler):
     def handle_exception(self, inst):
         if isinstance(inst, (KeyboardInterrupt, SystemExit)):
             return ExceptionManager.RAISE
-        app = App.get_running_app()
+        app = App.get_running_app()  # noqa
         if not app.DEBUG and app.RAISE_ERROR:
             return ExceptionManager.RAISE
         app.set_error(inst, tb=traceback.format_exc())
@@ -38,7 +43,7 @@ class E(ExceptionHandler):
 ExceptionManager.add_handler(E())
 
 
-class App(BaseApp):
+class HotReload:
     """Kaki Application class
     """
 
@@ -86,27 +91,31 @@ class App(BaseApp):
 
     __events__ = ["on_idle", "on_wakeup"]
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.approot = None  # noqa
+        self.state = {}
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connected = False
+        self.HEADER_LENGTH = 64
+        self.patch_builder()
+
     def build(self):
         Logger.info("Kaki: Application controlled by Kaki")
         if self.DEBUG:
             Logger.info("Kaki: Debug mode activated")
             self.enable_autoreload()
-            self.patch_builder()
             self.bind_key(self.SHORTCUT_REBUILD, self.rebuild)
         if self.FOREGROUND_LOCK:
             self.prepare_foreground_lock()
-
-        self.state = {}
-        self.approot = None
-        self.root = self.get_root()
+        self.root = self.get_root()  # noqa
         self.rebuild(first=True)
 
         if self.IDLE_DETECTION:
             self.install_idle(timeout=self.IDLE_TIMEOUT)
 
-        return super(App, self).build()
-
-    def get_root(self):
+    @staticmethod
+    def get_root():
         """
         Return a root widget, that will contains your application.
         It should not be your application widget itself, as it may
@@ -115,15 +124,8 @@ class App(BaseApp):
         By default, it returns a RelativeLayout, but it could be
         a Viewport.
         """
+
         return Factory.RelativeLayout()
-
-    def build_app(self, first=False):
-        """Must return your application widget.
-
-        If `first` is set, it means that will be your first time ever
-        that the application is built. Act according to it.
-        """
-        raise NotImplemented()
 
     def unload_app_dependencies(self):
         """
@@ -138,7 +140,7 @@ class App(BaseApp):
 
     def load_app_dependencies(self):
         """
-        Load all the application dependencies.
+        Load all the application dependenload_filecies.
         This is called before rebuild.
         """
         for path in self.KV_FILES:
@@ -154,14 +156,14 @@ class App(BaseApp):
             if not first:
                 self.unload_app_dependencies()
 
-            # in case the loading fail in the middle of building a widget
-            # there will be existing rules context that will break later
-            # instanciation. just clean it.
-            Builder.rulectx = {}
+                # in case the loading fail in the middle of building a widget
+                # there will be existing rules context that will break later
+                # instanciation. just clean it.
+                Builder.rulectx = {}
 
-            self.load_app_dependencies()
+                self.load_app_dependencies()
             self.set_widget(None)
-            self.approot = self.build_app()
+            self.approot = super().build()  # noqa
             self.set_widget(self.approot)
             self.apply_state(self.state)
         except Exception as e:
@@ -175,17 +177,17 @@ class App(BaseApp):
     def set_error(self, exc, tb=None):
         from kivy.core.window import Window
         lbl = Factory.Label(
-            size_hint = (1, None),
-            padding_y = 150,
-            text_size = (Window.width - 100, None),
+            size_hint=(1, None),
+            padding_y=150,
+            text_size=(Window.width - 100, None),
             text="{}\n\n{}".format(exc, tb or ""))
         lbl.texture_update()
         lbl.height = lbl.texture_size[1]
         sv = Factory.ScrollView(
-            size_hint = (1, 1),
-            pos_hint = {'x': 0, 'y': 0},
-            do_scroll_x = False,
-            scroll_y = 0)
+            size_hint=(1, 1),
+            pos_hint={'x': 0, 'y': 0},
+            do_scroll_x=False,
+            scroll_y=0)
         sv.add_widget(lbl)
         self.set_widget(sv)
 
@@ -219,9 +221,11 @@ class App(BaseApp):
         try:
             from watchdog.observers import Observer
             from watchdog.events import FileSystemEventHandler
+            import logging
         except ImportError:
             Logger.warn("Reloader: Unavailable, watchdog is not installed")
             return
+        logging.getLogger("watchdog").setLevel(logging.INFO)
         Logger.info("Reloader: Autoreloader activated")
         rootpath = self.get_root_path()
         self.w_handler = handler = FileSystemEventHandler()
@@ -275,7 +279,7 @@ class App(BaseApp):
             mod_filename = None
 
         # detect if it's the application class // main
-        if mod_filename == filename:
+        if mod_filename == filename or basename(filename) == "main.py":
             return self._restart_app(mod)
 
         module = self._filename_to_module(filename)
@@ -314,6 +318,9 @@ class App(BaseApp):
         return module
 
     def _restart_app(self, mod):
+        self.client_socket.close()
+        if platform == "android":
+            self.restart_app_on_android()
         _has_execv = sys.platform != 'win32'
         cmd = [sys.executable] + original_argv
         if not _has_execv:
@@ -326,6 +333,23 @@ class App(BaseApp):
             except OSError:
                 os.spawnv(os.P_NOWAIT, sys.executable, cmd)
                 os._exit(0)
+
+    @staticmethod
+    def restart_app_on_android():
+        Logger.info("Restarting the app on smartphone")
+
+        from jnius import autoclass  # type: ignore
+
+        Intent = autoclass("android.content.Intent")
+        PythonActivity = autoclass("org.kivy.android.PythonActivity")
+        System = autoclass("java.lang.System")
+
+        activity = PythonActivity.mActivity
+        intent = Intent(activity.getApplicationContext(), PythonActivity)
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        activity.startActivity(intent)
+        System.exit(0)
 
     def prepare_foreground_lock(self):
         """
@@ -365,7 +389,7 @@ class App(BaseApp):
         """
         Return the root file path
         """
-        return realpath(os.getcwd())
+        return realpath(os.getcwd())  # change to main.py
 
     # State management
     def apply_state(self, state):
@@ -448,6 +472,13 @@ class App(BaseApp):
     def patch_builder(self):
         Builder.orig_load_string = Builder.load_string
         Builder.load_string = self._builder_load_string
+        Builder.orig_load_file = Builder.load_file
+        Builder.load_file = self._builder_load_file
+
+    def _builder_load_file(self, filename, encoding='utf8', **kwargs):
+        if filename in Builder.files:
+            Builder.unload_file(filename)
+        return Builder.orig_load_file(filename, encoding=encoding, **kwargs)
 
     def _builder_load_string(self, string, **kwargs):
         if "filename" not in kwargs:
@@ -455,3 +486,50 @@ class App(BaseApp):
             caller = getframeinfo(stack()[1][0])
             kwargs["filename"] = caller.filename
         return Builder.orig_load_string(string, **kwargs)
+
+    def thread_server_connection(self):
+        Logger.info("Establishing Connection: ...")
+        Thread(target=self.connect_server).start()
+
+    def connect_server(self):
+        self.client_socket.connect(("localhost", 5567))
+        self.connected = True
+        Logger.info(f"Connection Established: {self.client_socket.getsockname()}")
+        self.listen_for_update()
+
+    def listen_for_update(self):
+        try:
+            while True:
+                header = self.client_socket.recv(self.HEADER_LENGTH)
+                if not len(header):
+                    self.client_socket.close()
+                    Logger.info("SERVER DOWN: Shutting down the connection")
+                    break
+                message_length = int(header)
+                __chunks, __remainder = divmod(message_length, 1000)
+                code_data = [
+                    self.client_socket.recv(1000)
+                    for _ in range(__chunks)
+                    if __chunks >= 1
+                ]
+                code_data.append(self.client_socket.recv(__remainder)) if __remainder else None
+                code_data = b"".join(code_data)
+                try:
+                    _data = pickle.loads(code_data)
+                except pickle.UnpicklingError as e:
+                    Logger.error(str(e))
+                    Logger.info("Re-save: Save Your file again on the Client Updater(KivyLiveClient)")
+
+                    continue
+                self.update_code(_data)
+        except (ConnectionError, socket.error) as e:
+            Logger.error(str(e))
+            Logger.info("SERVER DOWN: Shutting down the connection")
+
+    @staticmethod
+    def update_code(code_data):
+        # write code
+        file = code_data["file"]
+        with open(file, "w") as f:
+            f.write(code_data["code"])
+        Logger.info(f"FILE UPDATE: {file} was updated")
