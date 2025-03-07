@@ -61,6 +61,7 @@ def main():
     subprocess.run("adb devices", shell=True)
     print("running: adb reverse tcp:5567 tcp:5567")
     subprocess.Popen(["adb", "reverse", "tcp:5567", "tcp:5567"])
+    shutil.copy("main.py", "main.py.orig")
     shutil.move("main.py", "app.py")
     shutil.copy(join(dirname(__file__), "main.py.tmp"), "main.py")
 
