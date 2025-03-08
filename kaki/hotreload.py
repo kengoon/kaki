@@ -107,7 +107,7 @@ class HotReload:
         if self.FOREGROUND_LOCK:
             self.prepare_foreground_lock()
         self.root = self.get_root()  # noqa
-        self.rebuild(first=True)
+        self.rebuild()
 
         if self.IDLE_DETECTION:
             self.install_idle(timeout=self.IDLE_TIMEOUT)
@@ -125,41 +125,9 @@ class HotReload:
 
         return Factory.RelativeLayout()
 
-    def unload_app_dependencies(self):
-        """
-        Called when all the application dependencies must be unloaded.
-        Usually happen before a reload
-        """
-        for path in self.KV_FILES:
-            path = realpath(path)
-            Builder.unload_file(path)
-        for name, module in self.CLASSES.items():
-            Factory.unregister(name)
-
-    def load_app_dependencies(self):
-        """
-        Load all the application dependenload_filecies.
-        This is called before rebuild.
-        """
-        for path in self.KV_FILES:
-            path = realpath(path)
-            Builder.load_file(path)
-        for name, module in self.CLASSES.items():
-            Factory.register(name, module=module)
-
-    def rebuild(self, *largs, **kwargs):
+    def rebuild(self):
         Logger.debug("Reloader: Rebuild the application")
-        first = kwargs.get("first", False)
         try:
-            if not first:
-                self.unload_app_dependencies()
-
-                # in case the loading fail in the middle of building a widget
-                # there will be existing rules context that will break later
-                # instanciation. just clean it.
-                Builder.rulectx = {}
-
-                self.load_app_dependencies()
             self.set_widget(None)
             self.approot = super().build()  # noqa
             self.set_widget(self.approot)
@@ -260,6 +228,9 @@ class HotReload:
                 return
 
         Logger.debug(f"Reloader: Triggered by {event}")
+        if event.src_path.endswith(".kv"):
+            Builder.unload_file(event.src_path)
+            Builder.load_file(event.src_path)
         Clock.unschedule(self.rebuild)
         Clock.schedule_once(self.rebuild, 0.1)
 
