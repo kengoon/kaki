@@ -8,7 +8,7 @@ This library enhance Kivy frameworks with opiniated features such as:
 
 ## Installation
 ```shell
-pip install https://github.com/kengoon/kaki/releases/download/v1.0.0/kaki_cli-1.0.0-py3-none-any.whl
+pip install https://github.com/kengoon/kaki/releases/download/v1.0.1/kaki_cli-1.0.1-py3-none-any.whl
 ```
 
 ## Example
