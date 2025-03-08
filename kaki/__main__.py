@@ -1,6 +1,8 @@
 import shutil
 import subprocess
 import sys
+from configparser import ConfigParser
+from os import makedirs
 from os.path import exists, dirname, join
 from time import sleep
 
@@ -58,12 +60,24 @@ def main():
         sys.exit("'main.py' not found")
     if not exists("buildozer.spec"):
         sys.exit("'buildozer.spec' not found")
+    config = ConfigParser()
+    config.read("buildozer.spec")
+    if not config.getboolean("app", "android.no-byte-compile-python", fallback=False):
+        sys.exit("uncomment or set 'android.no-byte-compile-python' to True in buildozer.spec")
+    if "kaki" in config.get("app", "requirements", fallback=""):
+        sys.exit("remove 'kaki' from buildozer.spec requirements. It's auto managed")
     subprocess.run("adb devices", shell=True)
     print("running: adb reverse tcp:5567 tcp:5567")
     subprocess.Popen(["adb", "reverse", "tcp:5567", "tcp:5567"])
     shutil.copy("main.py", "main.py.orig")
     shutil.move("main.py", "app.py")
     shutil.copy(join(dirname(__file__), "main.py.tmp"), "main.py")
+
+    kaki_dir = "kaki"
+    if exists(kaki_dir):
+        shutil.rmtree(kaki_dir)
+    makedirs(kaki_dir)
+    shutil.copy(join(dirname(__file__), "hotreload.py"), join(kaki_dir, "hotreload.py"))
 
     if args.build:
         print("\n🔧 Running Buildozer...")

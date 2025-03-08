@@ -1,16 +1,24 @@
 [tool.poetry]
-name = "kaki"
-version = "0.1.0"
-description = ""
-authors = ["Kenechukwu Akubue <kengoon19@gmail.com>"]
+name = "kaki-cli"
+version = "1.0.0"
+description = "Kivy Hotreload"
+authors = ["Mathieu Virbel <mat@meltingrocks.com>", "Kenechukwu Akubue <kengoon19@gmail.com>"]
 readme = "README.md"
+license = "MIT"
+packages = [{ include = "kaki" }]
+repository = "https://github.com/kengoon/kaki"
 
 [tool.poetry.dependencies]
 python = "^3.13"
 watchdog = "^6.0.0"
 kivy = "^2.3.1"
+psutil = "^7.0.0"
+buildozer = "^1.5.0"
 
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+kaki = "kaki.__main__:main"

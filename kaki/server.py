@@ -3,12 +3,10 @@ import os
 import socket
 import select
 import pickle
-from datetime import datetime
 from threading import Thread
 from time import sleep
 
 from kivy import Logger
-from multiprocessing import Process
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 import logging

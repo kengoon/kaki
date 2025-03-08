@@ -15,66 +15,10 @@ This is a bootstrap that will:
 If the bootstrap is started with the environment variable `DEBUG=1`, it will start a watchdog, and listen for changes, according to `AUTORELOADER_PATHS`.
 When something changes, the current application widget will be cleared out, and a new one will be instanciated, after reloading.
 
-```python
-from kaki.app import HotReload
-from kivy.factory import Factory
-
-
-class Live(HotReload):
-    CLASSES = {
-        "UI": "live.ui"
-    }
-    AUTORELOADER_PATHS = [
-        (".", {"recursive": True}),
-    ]
-
-    def build_app(self):
-        return Factory.UI()
-
-
-Live().run()
+```shell
+kaki run # deploy app and run hotreload
+kaki run --build # build, deploy and run hotreload
 ```
-
-## Application class configuration
-
-
-    #: Control either we activate debugging in the app or not
-    #: Defaults depend if "DEBUG" exists in os.environ
-    DEBUG = "DEBUG" in os.environ
-
-    #: If true, it will require the foreground lock on windows
-    FOREGROUND_LOCK = False
-
-    #: List of KV files under management for auto reloader
-    KV_FILES = []
-
-    #: List of path to watch for autoreloading
-    AUTORELOADER_PATHS = [
-        # (".", {"recursive": False}),
-    ]
-
-    #: List of extensions to ignore
-    AUTORELOADER_IGNORE_PATTERNS = [
-        "*.pyc", "*__pycache__*"]
-
-    #: Factory classes managed by kaki
-    CLASSES = {}
-
-    #: Idle detection (if True, event on_idle/on_wakeup will be fired)
-    #: Rearming idle can also be done with rearm_idle()
-    IDLE_DETECTION = False
-
-    #: Auto install idle detection check when activated
-    IDLE_DETECTION_AUTO_START = True
-
-    #: Default idle timeout
-    IDLE_TIMEOUT = 60
-
-    #: Raise error
-    #: When the DEBUG is activated, it will raise any error instead
-    #: of showing it on the screen. If you still want to show the error
-    #: when not in DEBUG, put this to False
-    RAISE_ERROR = True
 
 ## Idle Management
 

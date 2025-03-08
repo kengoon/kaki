@@ -19,13 +19,9 @@ def find_all_kv_files():
     """
     kv_files = []
     for path_to_dir, dirs, files in os.walk("."):
-        # When using the `load_all_kv_files` method, all KV files
-        # from the `KivyMD` library were loaded twice, which leads to
-        # failures when using application built using `PyInstaller`.
         if (
             "venv" in path_to_dir
             or ".buildozer" in path_to_dir
-            or os.path.join("kivymd") in path_to_dir
         ):
             continue
         for name_file in files:
@@ -41,9 +37,6 @@ def find_all_kv_files():
 
 HotReload = type("HotReload", (HotReload, find_kivy_app_class()), {})
 HotReload.KV_FILES = find_all_kv_files()
-HotReload.AUTORELOADER_PATHS = [
-        (".", {"recursive": True}),
-    ]
 
 if __name__ == "__main__":
     hotreload = HotReload()

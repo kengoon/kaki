@@ -58,9 +58,7 @@ class HotReload:
     KV_FILES = []
 
     #: List of path to watch for autoreloading
-    AUTORELOADER_PATHS = [
-        # (".", {"recursive": False}),
-    ]
+    AUTORELOADER_PATHS = [(".", {"recursive": False})]
 
     #: List of extensions to ignore
     AUTORELOADER_IGNORE_PATTERNS = [
