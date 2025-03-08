@@ -125,7 +125,7 @@ class HotReload:
 
         return Factory.RelativeLayout()
 
-    def rebuild(self):
+    def rebuild(self, *_):
         Logger.debug("Reloader: Rebuild the application")
         try:
             self.set_widget(None)
