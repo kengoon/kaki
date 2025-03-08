@@ -6,6 +6,11 @@ This library enhance Kivy frameworks with opiniated features such as:
 - Idle detection support
 - Foreground lock (windows only)
 
+## Installation
+```shell
+pip install https://github.com/kengoon/kaki/releases/download/v1.0.0/kaki_cli-1.0.0-py3-none-any.whl
+```
+
 ## Example
 
 This is a bootstrap that will:

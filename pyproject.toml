@@ -2,14 +2,14 @@
 name = "kaki-cli"
 version = "1.0.0"
 description = "Kivy Hotreload"
-authors = ["Mathieu Virbel <mat@meltingrocks.com>", "Kenechukwu Akubue <kengoon19@gmail.com>"]
+authors = ["Kenechukwu Akubue <kengoon19@gmail.com>", "Mathieu Virbel <mat@meltingrocks.com>"]
 readme = "README.md"
 license = "MIT"
 packages = [{ include = "kaki" }]
 repository = "https://github.com/kengoon/kaki"
 
 [tool.poetry.dependencies]
-python = "^3.13"
+python = "^3.9"
 watchdog = "^6.0.0"
 kivy = "^2.3.1"
 psutil = "^7.0.0"

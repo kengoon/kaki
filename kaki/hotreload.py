@@ -58,7 +58,7 @@ class HotReload:
     KV_FILES = []
 
     #: List of path to watch for autoreloading
-    AUTORELOADER_PATHS = [(".", {"recursive": False})]
+    AUTORELOADER_PATHS = [(".", {"recursive": True})]
 
     #: List of extensions to ignore
     AUTORELOADER_IGNORE_PATTERNS = [
@@ -277,7 +277,7 @@ class HotReload:
             mod_filename = None
 
         # detect if it's the application class // main
-        if mod_filename == filename or basename(filename) == "main.py":
+        if mod_filename == filename or basename(filename) in ["main.py", "app.py"]:
             return self._restart_app(mod)
 
         module = self._filename_to_module(filename)
@@ -319,6 +319,7 @@ class HotReload:
         self.client_socket.close()
         if platform == "android":
             self.restart_app_on_android()
+            return
         _has_execv = sys.platform != 'win32'
         cmd = [sys.executable] + original_argv
         if not _has_execv:
