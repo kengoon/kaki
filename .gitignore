@@ -1,8 +1,3 @@
-*.pyc
-*.pyo
-__pycache__
-.ropeproject
-*.egg-info
-dist
-.DS_Store
-poetry.lock
+/.idea/
+/dist/
+/poetry.lock
