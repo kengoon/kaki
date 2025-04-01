@@ -87,18 +87,40 @@ class KivyLiveServer:
                 break
 
     def recv_conn(self):
-        read_socket, _, exception_sockets = select.select(self.socket_list, [], self.socket_list)
-        for notified_socket in read_socket:
-            if notified_socket == self.server_socket:
-                client_socket, client_address = self.server_socket.accept()
-                Logger.info(f"NEW CONNECTION: [IP] {client_address[0]}, [PORT] {client_address[1]}")
-                self.socket_list.append(client_socket)
-                # client_socket.close()
-                self.client.update({f"{client_address[0]}:{client_address[1]}": client_socket})
-                Thread(target=self.recv_msg, args=(client_socket, client_address)).start()
-            elif notified_socket is self.stop_socket_r:
-                # Stop signal received, exit loop
-                return
+        try:
+            read_socket, _, exception_sockets = select.select(self.socket_list, [], self.socket_list)
+            for notified_socket in read_socket:
+                if notified_socket == self.server_socket:
+                    client_socket, client_address = self.server_socket.accept()
+                    Logger.info(f"NEW CONNECTION: [IP] {client_address[0]}, [PORT] {client_address[1]}")
+                    self.socket_list.append(client_socket)
+                    # client_socket.close()
+                    self.client.update({f"{client_address[0]}:{client_address[1]}": client_socket})
+                    Thread(target=self.recv_msg, args=(client_socket, client_address)).start()
+                elif notified_socket is self.stop_socket_r:
+                    # Stop signal received, exit loop
+                    return
+            for notified_socket in exception_sockets:
+                if notified_socket in self.socket_list:
+                    self.socket_list.remove(notified_socket)
+                notified_socket.close()
+        except OSError as e:
+            if e.errno == 9:
+                Logger.error("OSError: Bad file descriptor encountered")
+                # Cleanup self.socket_list.
+                # Remove all closed sockets.
+                sockets_to_remove = []
+                for sock in self.socket_list:
+                    try:
+                        sock.fileno()  # check if the file descriptor is valid.
+                    except OSError:
+                        sockets_to_remove.append(sock)
+                for sock in sockets_to_remove:
+                    self.socket_list.remove(sock)
+                    sock.close()
+
+            else:
+                raise e
 
     def clean(self, client_socket, address):
         Logger.info(f"CONNECTION CLOSED: {address[0]}:{address[1]}")

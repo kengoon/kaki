@@ -10,6 +10,7 @@ import sys
 from threading import Thread
 
 from kivy import platform
+from kivy.core.window import Window
 
 original_argv = sys.argv
 
@@ -346,10 +347,15 @@ class HotReload:
         Clear the root container, and set the new approot widget to `wid`
         """
         self.root.clear_widgets()
+        for widget in Window.children:
+            if widget == self.root:
+                continue
+            Window.remove_widget(widget)
         self.approot = wid
         if wid is None:
             return
         self.root.add_widget(self.approot)
+        self.dispatch("on_start")
         try:
             wid.do_layout()
         except Exception:
