@@ -115,7 +115,7 @@ def main():
         proc = subprocess.Popen(["buildozer", "android", "debug", "deploy", "run", "logcat"])
         processes.append(proc)
     else:
-        proc = subprocess.Popen(["buildozer", "android", "deploy", "run", "logcat"])
+        proc = subprocess.Popen(["buildozer", "android", "run", "logcat"])
         processes.append(proc)
 
     if is_scrcpy_installed():

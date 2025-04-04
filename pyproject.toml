@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kaki-cli"
-version = "1.0.3"
+version = "1.0.4"
 description = "Kivy Hotreload"
 authors = ["Kenechukwu Akubue <kengoon19@gmail.com>", "Mathieu Virbel <mat@meltingrocks.com>"]
 readme = "README.md"
