@@ -121,7 +121,7 @@ def main():
     if is_scrcpy_installed():
         print("scrcpy is installed ✅")
         subprocess.run("alias adb=~/.buildozer/android/platform/android-sdk/platform-tools/adb", shell=True)
-        proc = subprocess.Popen(["scrcpy", "--always-on-top"])
+        proc = subprocess.Popen(["scrcpy", "--always-on-top", "--no-audio"])
         processes.append(proc)
     else:
         print("scrcpy is NOT installed ❌")
