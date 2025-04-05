@@ -67,6 +67,7 @@ def main():
     )
     parser.add_argument("run", help="Run Kaki hot reload")
     parser.add_argument("--build", action="store_true", help="Build APK before running Kaki")
+    parser.add_argument("--scrcpy", action="store_true", help="Mirror android device using scrcpy")
 
     args = parser.parse_args()
     if "run" != args.run:
@@ -117,14 +118,14 @@ def main():
     else:
         proc = subprocess.Popen(["buildozer", "android", "run", "logcat"])
         processes.append(proc)
-
-    if is_scrcpy_installed():
-        print("scrcpy is installed ✅")
-        subprocess.run("alias adb=~/.buildozer/android/platform/android-sdk/platform-tools/adb", shell=True)
-        proc = subprocess.Popen(["scrcpy", "--always-on-top", "--no-audio"])
-        processes.append(proc)
-    else:
-        print("scrcpy is NOT installed ❌")
+    if args.scrcpy:
+        if is_scrcpy_installed():
+            print("scrcpy is installed ✅")
+            subprocess.run("alias adb=~/.buildozer/android/platform/android-sdk/platform-tools/adb", shell=True)
+            proc = subprocess.Popen(["scrcpy", "--always-on-top", "--no-audio"])
+            processes.append(proc)
+        else:
+            print("scrcpy is NOT installed ❌")
 
     run_server()
 
