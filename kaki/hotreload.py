@@ -5,8 +5,10 @@ Kaki Application
 
 """
 import pickle
+import shutil
 import socket
 import sys
+from pathlib import Path
 from threading import Thread
 
 from kivy import platform
@@ -497,15 +499,37 @@ class HotReload:
                     Logger.info("Re-save: Save Your file again on the Client Updater(KivyLiveClient)")
 
                     continue
-                self.update_code(_data)
+                if _data.get("status") == "create":
+                    self.create_file(_data)
+                elif _data.get("status") == "delete":
+                    self.delete_file(_data.get("file"))
+                else:
+                    self.update_code(_data)
         except (ConnectionError, socket.error) as e:
             Logger.error(str(e))
             Logger.info("SERVER DOWN: Shutting down the connection")
 
     @staticmethod
+    def create_file(data):
+        if data.get("type") == "directory":
+            os.makedirs(data.get("file"), exist_ok=True)
+        else:
+            Path(data.get("file")).touch()
+        Logger.info(f"FILE UPDATE: {data.get('file')} was created")
+
+    @staticmethod
+    def delete_file(file):
+        if os.path.isfile(file) and os.path.exists(file):
+            os.remove(file)
+        else:
+            shutil.rmtree(file, ignore_errors=True)
+        Logger.info(f"FILE UPDATE: {file} was deleted")
+
+    @staticmethod
     def update_code(code_data):
         # write code
         file = code_data["file"]
-        with open(file, "w") as f:
-            f.write(code_data["code"])
-        Logger.info(f"FILE UPDATE: {file} was updated")
+        if os.path.exists(file):
+            with open(file, "w") as f:
+                f.write(code_data["code"])
+            Logger.info(f"FILE UPDATE: {file} was updated")

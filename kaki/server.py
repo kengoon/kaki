@@ -26,35 +26,48 @@ class KivyFileListener(FileSystemEventHandler):
         self.server = KivyLiveServer()
         self.filepath = ""
 
-    def on_any_event(self, event):
-        pass
-
-    def on_modified(self, event):
+    def dispatch(self, event):
         src_path = event.src_path
-        if event.is_directory or src_path.endswith("~") or "__pycache__" in src_path:
+
+        if src_path.endswith("~") or "__pycache__" in src_path:
             return
-        filename = os.path.relpath(event.src_path)
+
+        filename = os.path.relpath(src_path)
         folder = filename.split("/")[0]
+
         if folder in [".venv", "venv", ".buildozer", "bin", ".idea", ".git"]:
+            return
+        self.on_any_event(event)
+        if event.event_type in ["deleted", "modified", "created"]:
+            getattr(self, f"on_{event.event_type}")(event, filename)
+        else:
+            getattr(self, f"on_{event.event_type}")(event)
+
+    def on_deleted(self, event, filename):
+        data = pickle.dumps({"file": filename, "status": "delete"})
+        self.server.broadcast_new_code(
+            f"{len(data):<{self.server.HEADER_LENGTH}}".encode("utf-8") + data
+        )
+
+    def on_modified(self, event, filename):
+        if event.is_directory:
             return
         binary = is_binary(open(filename, "rb").read(1024))
         with open(filename, "rb" if binary else "r") as file:
-            code_data = pickle.dumps({"file": filename, "code": file.read()})
+            code_data = pickle.dumps({"file": filename, "code": file.read(), "status": "modify"})
             self.server.broadcast_new_code(
                 f"{len(code_data):<{self.server.HEADER_LENGTH}}".encode("utf-8") + code_data,
             )
 
-    def on_created(self, event):
-        pass
-
-    def on_closed(self, event):
-        pass
-
-    def on_moved(self, event):
-        pass
-
-    def on_deleted(self, event):
-        pass
+    def on_created(self, event, filename):
+        data = pickle.dumps(
+            {"type": "directory" if event.is_directory else "file",
+             "file": filename, "status": "create"}
+        )
+        self.server.broadcast_new_code(
+            f"{len(data):<{self.server.HEADER_LENGTH}}".encode("utf-8") + data
+        )
+        return
 
 
 class KivyLiveServer:
