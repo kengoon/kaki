@@ -26,7 +26,7 @@ from kivy.clock import Clock, mainthread
 from kivy.factory import Factory
 from kivy.lang import Builder
 from kivy.base import ExceptionHandler, ExceptionManager
-from time import monotonic
+from time import monotonic, sleep
 from importlib import reload
 from kivy.app import App
 
@@ -470,6 +470,16 @@ class HotReload:
         Thread(target=self.connect_server).start()
 
     def connect_server(self):
+        def update_ui():
+            Logger.info("Reloader: Refresh UI")
+            sleep(3)
+            with open(".hot_reload", "w"):
+                pass
+            sleep(1)
+            with open(".hot_reload", "w"):
+                pass
+            Logger.info("Reloader: UI Refreshed")
+        Thread(target=update_ui).start()
         self.client_socket.connect(("localhost", 5567))
         self.connected = True
         Logger.info(f"Connection Established: {self.client_socket.getsockname()}")

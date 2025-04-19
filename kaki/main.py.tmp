@@ -1,5 +1,6 @@
 import os
 os.environ["DEBUG"] = "1"
+os.environ['KIVY_NO_FILELOG'] = "1"
 import inspect
 from kivy.app import App
 from kaki.hotreload import HotReload
