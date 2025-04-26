@@ -1,5 +1,7 @@
 # Kaki - Advanced application library for Kivy
 
+<!-- GitAds-Verify: Z9M6RFMOFB8IK354M14WPK2UHGPFAWTL -->
+
 This library enhance Kivy frameworks with opiniated features such as:
 
 - Auto reloading kv or py (`watchdog` required, limited to some uses cases)
