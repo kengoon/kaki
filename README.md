@@ -1,6 +1,10 @@
 # Kaki - Advanced application library for Kivy
 
 <!-- GitAds-Verify: Z9M6RFMOFB8IK354M14WPK2UHGPFAWTL -->
+## GitAds Sponsored
+[![Sponsored by GitAds](https://gitads.dev/v1/ad-serve?source=kengoon/kaki@github)](https://gitads.dev/v1/ad-track?source=kengoon/kaki@github)
+
+
 
 This library enhance Kivy frameworks with opiniated features such as:
 
